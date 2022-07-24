@@ -19,7 +19,11 @@ void updateSolutionCost (Solution *s, double **costMatrix) {
 		int currNode = s->sequence[i];
 		int nextNode = s->sequence[i +1];
 
-		cost += costMatrix[currNode][nextNode];
+		/**
+		 * The accumulated cost is a summation and the ith cost (costMatrix[currNode][nextNode])
+		 * will repeat (sequenceSize - 1 - i) times
+		 */
+		cost += (sequenceSize - 1 - i) * costMatrix[currNode][nextNode];
 	}
 
 	s->cost = cost;
