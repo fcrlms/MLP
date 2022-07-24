@@ -23,8 +23,8 @@ int main (int argc, char **argv)
 
 	readData(argc, argv, &dimension, &matrixAdj);
 
-	int maxIter = 50;
-	int maxIterILS = ( dimension >= 150 ) ? dimension/2 : dimension;
+	int maxIter = 10;
+	int maxIterILS = ( dimension >= 100 ) ? 100 : dimension;
 
 	RunInfo testData[TESTS_TO_RUN];
 
