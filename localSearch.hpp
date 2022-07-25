@@ -3,6 +3,6 @@
 
 #include "solution.hpp"
 
-void localSearch (double **matrixAdj, Solution *s);
+void localSearch (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix);
 
 #endif

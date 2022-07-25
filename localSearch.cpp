@@ -3,18 +3,19 @@
 #include <cmath> // ceil()
 
 #include "localSearch.hpp"
+#include "subsequence.hpp"
 #include "solution.hpp"
 
 #define NL_SIZE 5
 
-bool bestImprovementSwap (double **matrixAdj, Solution *s);
+bool bestImprovementSwap (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix);
 bool bestImprovement2Opt (double **matrixAdj, Solution *s);
 bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n);
 
 /**
  * Based on RVND (Random Variable Neighborhood Descent)
  */
-void localSearch (double **matrixAdj, Solution *s)
+void localSearch (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix)
 {
 	int NL[NL_SIZE] = { 1, 2, 3, 4, 5 };
 	int offset = 0;
@@ -27,7 +28,7 @@ void localSearch (double **matrixAdj, Solution *s)
 
 		switch (n) {
 		case 1:
-			improved = bestImprovementSwap(matrixAdj, s);
+			improved = bestImprovementSwap(s, matrixAdj, subseqMatrix);
 			break;
 		case 2:
 			improved = bestImprovement2Opt(matrixAdj, s);
@@ -56,57 +57,43 @@ void localSearch (double **matrixAdj, Solution *s)
 	return;
 }
 
-double calculateSwapCost (double **m, std::vector<int>& s, int i, int j)
+/**
+ * @param range number of nodes
+ * @param m cost matrix
+ * @param sM subsequence matrix
+ * @param i ith node position
+ * @param j jth node position
+ */
+double calculateSwapCost (int range, double **m, std::vector<std::vector<Subsequence>>& sM, int i, int j)
 {
-	double delta = 0;
+	Subsequence old = sM[0][range-1];
 
-	int prev_i = s[i-1];
-	int curr_i = s[i];
-	int next_i = s[i+1];
+	Subsequence sigma = sM[0][i-1];
+	sigma = Subsequence::Concatenate(sigma, sM[j][j], m);
 
-	int prev_j = s[j-1];
-	int curr_j = s[j];
-	int next_j = s[j+1];
-
-	// if the nodes are adjacents
-	if (i +1 == j) {
-		double oldCost_i = m[prev_i][curr_i];
-		double oldCost_j = m[curr_j][next_j];
-
-		double newCost_i = m[curr_i][next_j];
-		double newCost_j = m[prev_i][curr_j];
-
-		delta = (newCost_i + newCost_j) - (oldCost_i + oldCost_j);
-	} else {
-		// cost{i-1, i} + cost{i, i+1}
-		double oldCost_i = m[prev_i][curr_i] + m[curr_i][next_i];
-
-		// cost{j-1, j} + cost{j, j+1}
-		double oldCost_j = m[prev_j][curr_j] + m[curr_j][next_j];
-
-		// cost{i-1, j} + cost{j, i+1}
-		double newCost_i = m[prev_j][curr_i] + m[curr_i][next_j];
-
-		// cost{j-1, i} + cost{i, j+1}
-		double newCost_j = m[prev_i][curr_j] + m[curr_j][next_i];
-
-		delta = (newCost_i + newCost_j) - (oldCost_i + oldCost_j);
+	if (i + 1 != j) {
+		sigma = Subsequence::Concatenate(sigma, sM[i+1][j-1], m);
 	}
 
-	return delta;
+	sigma = Subsequence::Concatenate(sigma, sM[i][i], m);
+
+	sigma = Subsequence::Concatenate(sigma, sM[j+1][range], m);
+
+	return old.C - sigma.C;
 }
 
-bool bestImprovementSwap (double **matrixAdj, Solution *s)
+bool bestImprovementSwap (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix)
 {
 	double bestDelta = 0;
 	double best_i = 0;
 	double best_j = 0;
 
+	// range is the number of nodes, first node appears twice
 	int range = s->sequence.size() -1;
 
 	for (int i = 1; i < range -1; ++i)
 	for (int j = i +1; j < range; ++j) {
-		double thisDelta = calculateSwapCost(matrixAdj, s->sequence, i, j);
+		double thisDelta = calculateSwapCost(range, matrixAdj, subseqMatrix, i, j);
 
 		if (thisDelta < bestDelta) {
 			bestDelta = thisDelta;
@@ -117,6 +104,8 @@ bool bestImprovementSwap (double **matrixAdj, Solution *s)
 
 	if (bestDelta < 0) {
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
+
+		updateAllSubsequences(s, matrixAdj, subseqMatrix);
 
 		s->cost += bestDelta;
 
