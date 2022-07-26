@@ -9,8 +9,8 @@
 #define NL_SIZE 5
 
 bool bestImprovementSwap (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix);
-bool bestImprovement2Opt (double **matrixAdj, Solution *s);
-bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n);
+bool bestImprovement2Opt (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix);
+bool bestImprovementOrOpt (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix, int n);
 
 /**
  * Based on RVND (Random Variable Neighborhood Descent)
@@ -31,16 +31,16 @@ void localSearch (Solution *s, double **matrixAdj, std::vector<std::vector<Subse
 			improved = bestImprovementSwap(s, matrixAdj, subseqMatrix);
 			break;
 		case 2:
-			improved = bestImprovement2Opt(matrixAdj, s);
+			improved = bestImprovement2Opt(s, matrixAdj, subseqMatrix);
 			break;
 		case 3:
-			improved = bestImprovementOrOpt(matrixAdj, s, 1); // Reinsertion
+			improved = bestImprovementOrOpt(s, matrixAdj, subseqMatrix, 1); // Reinsertion
 			break;
 		case 4:
-			improved = bestImprovementOrOpt(matrixAdj, s, 2); // Or-opt2
+			improved = bestImprovementOrOpt(s, matrixAdj, subseqMatrix, 2); // Or-opt2
 			break;
 		case 5:
-			improved = bestImprovementOrOpt(matrixAdj, s, 3); // Or-opt3
+			improved = bestImprovementOrOpt(s, matrixAdj, subseqMatrix, 3); // Or-opt3
 			break;
 		}
 
@@ -58,15 +58,15 @@ void localSearch (Solution *s, double **matrixAdj, std::vector<std::vector<Subse
 }
 
 /**
- * @param range number of nodes
+ * @param n number of nodes
  * @param m cost matrix
  * @param sM subsequence matrix
  * @param i ith node position
  * @param j jth node position
  */
-double calculateSwapCost (int range, double **m, std::vector<std::vector<Subsequence>>& sM, int i, int j)
+double calculateSwapCost (int n, double **m, std::vector<std::vector<Subsequence>>& sM, int i, int j)
 {
-	Subsequence old = sM[0][range-1];
+	Subsequence old = sM[0][n-1];
 
 	Subsequence sigma = sM[0][i-1];
 	sigma = Subsequence::Concatenate(sigma, sM[j][j], m);
@@ -77,7 +77,7 @@ double calculateSwapCost (int range, double **m, std::vector<std::vector<Subsequ
 
 	sigma = Subsequence::Concatenate(sigma, sM[i][i], m);
 
-	sigma = Subsequence::Concatenate(sigma, sM[j+1][range], m);
+	sigma = Subsequence::Concatenate(sigma, sM[j+1][n-1], m);
 
 	return old.C - sigma.C;
 }
@@ -105,9 +105,9 @@ bool bestImprovementSwap (Solution *s, double **matrixAdj, std::vector<std::vect
 	if (bestDelta < 0) {
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
 
-		updateAllSubsequences(s, matrixAdj, subseqMatrix);
-
 		s->cost += bestDelta;
+
+		updateAllSubsequences(s, matrixAdj, subseqMatrix);
 
 		return true;
 	}
@@ -115,22 +115,25 @@ bool bestImprovementSwap (Solution *s, double **matrixAdj, std::vector<std::vect
 	return false;
 }
 
-double calculate2OptCost (double **m, std::vector<int>& s, int i, int j)
+/**
+ * @param n number of nodes
+ * @param m cost matrix
+ * @param sM subsequence matrix
+ * @param i subsequence start
+ * @param j subsequence end
+ */
+double calculate2OptCost (int n, double **m, std::vector<std::vector<Subsequence>>& sM, int i, int j)
 {
-	double delta = 0;
+	Subsequence old = sM[0][n-1];
 
-	int node_i = s[i];
-	int next_i = s[i +1];
+	Subsequence sigma = sM[0][i-1];
 
-	int node_j = s[j];
-	int next_j = s[j +1];
+	// the subsequence from i to j is inverted and reinserted
+	sigma = Subsequence::Concatenate(sigma, sM[j][i], m);
 
-	double oldCost = m[node_i][next_i] + m[node_j][next_j];
-	double newCost = m[node_i][node_j] + m[next_i][next_j];
+	sigma = Subsequence::Concatenate(sigma, sM[j+1][n-1], m);
 
-	delta = newCost - oldCost;
-
-	return delta;
+	return old.C - sigma.C;
 }
 
 void exec2Opt (std::vector<int>& s, int i, int j)
@@ -147,7 +150,7 @@ void exec2Opt (std::vector<int>& s, int i, int j)
 	}
 }
 
-bool bestImprovement2Opt (double **matrixAdj, Solution *s)
+bool bestImprovement2Opt (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix)
 {
 	double bestDelta = 0;
 
@@ -161,7 +164,7 @@ bool bestImprovement2Opt (double **matrixAdj, Solution *s)
 	 * because it is adjacent to the first edge since it is a loop
 	 */
 	for (int j = 2; j < range; ++j) {
-		double thisDelta = calculate2OptCost(matrixAdj, s->sequence, 0, j);
+		double thisDelta = calculate2OptCost(range, matrixAdj, subseqMatrix, 0, j);
 
 		if (thisDelta < bestDelta) {
 			bestDelta = thisDelta;
@@ -173,7 +176,7 @@ bool bestImprovement2Opt (double **matrixAdj, Solution *s)
 	// remaining cases
 	for (int i = 1; i < range -2; ++i)
 	for (int j = i +2; j < range; ++j) {
-		double thisDelta = calculate2OptCost(matrixAdj, s->sequence, i, j);
+		double thisDelta = calculate2OptCost(range, matrixAdj, subseqMatrix, i, j);
 
 		if (thisDelta < bestDelta) {
 			bestDelta = thisDelta;
@@ -186,6 +189,8 @@ bool bestImprovement2Opt (double **matrixAdj, Solution *s)
 		exec2Opt(s->sequence, best_i, best_j);
 
 		s->cost += bestDelta;
+
+		updateAllSubsequences(s, matrixAdj, subseqMatrix);
 
 		return true;
 	}
@@ -236,34 +241,47 @@ void execOrOpt(std::vector<int>& s, int best_start, int n, int best_posInsert)
 	}
 }
 
-double calculateOrOptCost (double **m, std::vector<int>& s, int start, int end, int pos)
+/**
+ * @param n number of nodes
+ * @param m cost matrix
+ * @param sM subsequence matrix
+ * @param start start of chain
+ * @param end end of chain (last element of chain is end-1)
+ * @param pos position to insert the chain (first node of chain will be at pos+1)
+ */
+double calculateOrOptCost (int n, double **m, std::vector<std::vector<Subsequence>>& sM, int start, int end, int pos)
 {
-	double delta = 0;
+	Subsequence old = sM[0][n-1];
 
-	int node_start = s[start];
-	int prev_start = s[start -1];
-
-	int node_end = s[end];
-	int prev_end = s[end -1];
-
-	int node_insert = s[pos];
-	int next_insert = s[pos +1];
-
-	double oldCost = m[prev_start][node_start] + m[prev_end][node_end] + m[node_insert][next_insert];
-	double newCost = m[prev_start][node_end] + m[prev_end][next_insert] + m[node_insert][node_start];
-
-	delta = newCost - oldCost;
-
-	return delta;
+	// position to insert comes before the chain
+	if (pos < start) {
+		Subsequence sigma = sM[0][pos];
+		sigma = Subsequence::Concatenate(sigma, sM[start][end-1], m);
+		sigma = Subsequence::Concatenate(sigma, sM[pos+1][start-1], m);
+		sigma = Subsequence::Concatenate(sigma, sM[end][n-1], m);
+		return old.C - sigma.C;
+	}
+	// position to insert comes after the chain
+	else {
+		Subsequence sigma = sM[0][start-1];
+		sigma = Subsequence::Concatenate(sigma, sM[end][pos], m);
+		sigma = Subsequence::Concatenate(sigma, sM[start][end-1], m);
+		sigma = Subsequence::Concatenate(sigma, sM[pos+1][n-1], m);
+		return old.C - sigma.C;
+	}
 }
 
-bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n)
+/**
+ * @param n size of chain
+ */
+bool bestImprovementOrOpt (Solution *s, double **matrixAdj, std::vector<std::vector<Subsequence>>& subseqMatrix, int n)
 {
 	double bestDelta = 0;
 	double best_start = 0;
 	double best_posInsert = 0;
 
 	int range = s->sequence.size() -n;
+	int totalNodes = s->sequence.size();
 
 	/**
 	 * The first element of the chain is start
@@ -274,7 +292,7 @@ bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n)
 
 		// i is the position to insert, the first node will be put at i+1
 		for (int i = 0; i < start -1; ++i) {
-			double thisDelta = calculateOrOptCost(matrixAdj, s->sequence, start, end, i);
+			double thisDelta = calculateOrOptCost(totalNodes, matrixAdj, subseqMatrix, start, end, i);
 
 			if (thisDelta < bestDelta) {
 				bestDelta = thisDelta;
@@ -284,7 +302,7 @@ bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n)
 		}
 
 		for (int i = end; i < range; ++i) {
-			double thisDelta = calculateOrOptCost(matrixAdj, s->sequence, start, end, i);
+			double thisDelta = calculateOrOptCost(totalNodes, matrixAdj, subseqMatrix, start, end, i);
 
 			if (thisDelta < bestDelta) {
 				bestDelta = thisDelta;
@@ -298,6 +316,9 @@ bool bestImprovementOrOpt (double **matrixAdj, Solution *s, int n)
 		execOrOpt(s->sequence, best_start, n, best_posInsert);
 
 		s->cost += bestDelta;
+
+		updateAllSubsequences(s, matrixAdj, subseqMatrix);
+
 		return true;
 	}
 
