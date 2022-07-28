@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++11 -Wall -Wextra -Werror -pedantic -O3
+CXXFLAGS = -std=c++11 -Wall -Wextra -Werror -pedantic -O3 -ffast-math
 
 SOURCES = $(wildcard *.cpp)
 
