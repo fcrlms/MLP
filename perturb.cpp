@@ -4,6 +4,7 @@
 #include <random>
 
 #include "perturb.hpp"
+#include "subsequence.hpp"
 #include "solution.hpp"
 
 std::random_device rd;  // Will be used to obtain a seed for the random number engine
@@ -17,56 +18,77 @@ int randomNumber(int lowerLimit, int upperLimit)
 	return distrib(gen);
 }
 
-double calcDoubleBridgeCost (double **m, std::vector<int>& s, int fPos, int fSize, int sPos, int sSize)
+void execDoubleBridge (Solution *s, int fPos, int fSize, int sPos, int sSize)
 {
-	double delta = 0;
-
-	// the segments are adjacent
-	if (fPos + fSize == sPos) {
-		int node_fpos = s[fPos];
-		int prev_fpos = s[fPos -1];
-		int prev_fend = s[fPos + fSize -1];
-
-		int node_spos = s[sPos];
-		int node_send = s[sPos + sSize];
-		int prev_send = s[sPos + sSize -1];
-
-		double oldCost = m[prev_fpos][node_fpos] + m[prev_fend][node_spos] + m[prev_send][node_send];
-		double newCost = m[prev_fpos][node_spos] + m[prev_send][node_fpos] + m[prev_fend][node_send];
-
-		delta = newCost - oldCost;
-	}
-	// segments not adjacent
-	else {
-		int node_fpos = s[fPos];
-		int prev_fpos = s[fPos -1];
-
-		int node_fend = s[fPos + fSize];
-		int prev_fend = s[fPos + fSize -1];
-
-		int node_spos = s[sPos];
-		int prev_spos = s[sPos -1];
-
-		int node_send = s[sPos + sSize];
-		int prev_send = s[sPos + sSize -1];
-
-		double oldFCost = m[prev_fpos][node_fpos] + m[prev_fend][node_fend];
-		double oldSCost = m[prev_spos][node_spos] + m[prev_send][node_send];
-
-		double newFCost = m[prev_spos][node_fpos] + m[prev_fend][node_send];
-		double newSCost = m[prev_fpos][node_spos] + m[prev_send][node_fend];
-
-		delta = (newSCost + newFCost) - (oldSCost + oldFCost);
+	std::vector<int> firstSeg (fSize);
+	for (int i = 0; i < fSize; ++i) {
+		firstSeg[i] = s->sequence[fPos +i];
 	}
 
-	return delta;
+	std::vector<int> secondSeg (sSize);
+	for (int i = 0; i < sSize; ++i) {
+		secondSeg[i] = s->sequence[sPos +i];
+	}
+
+	int smallestSequence = std::min(fSize, sSize);
+
+	for (int i = 0; i < smallestSequence; ++i) {
+		std::swap(s->sequence[fPos +i], s->sequence[sPos +i]);
+	}
+
+	int diff = fSize - sSize;
+
+	// if the first sequence is bigger
+	if (diff > 0) {
+		diff = std::abs(diff);
+
+		// toMove stores the elements that haven't been moved from the first sequence
+		std::vector<int> toMove (diff);
+		int offset = fPos + sSize;
+		for (int i = 0; i < diff; ++i) {
+			toMove[i] = s->sequence[i + offset];
+		}
+
+		// moving all elements diff positions backwards to give room for toMove
+		int upper = sPos + sSize;
+		for (int i = fPos + fSize; i < upper; ++i) {
+			s->sequence[i - diff] = s->sequence[i];
+		}
+
+		// inserting toMove
+		int insert_offset = sPos + sSize - diff;
+		for (int i = 0; i < diff; i++) {
+			s->sequence[insert_offset + i] = toMove[i];
+		}
+	}
+	// if the second sequence is bigger
+	else if (diff < 0) {
+		diff = std::abs(diff);
+
+		std::vector<int> toMove (diff);
+		int offset = sPos + fSize;
+		for (int i = 0; i < diff; ++i) {
+			toMove[i] = s->sequence[i + offset];
+		}
+
+		int lower = fPos + fSize;
+		for (int i = offset -1; i >= lower; --i) {
+			s->sequence[i + diff] = s->sequence[i];
+		}
+
+		int insert_offset = fPos + fSize;
+		for (int i = 0; i < diff; ++i) {
+			s->sequence[insert_offset + i] = toMove[i];
+		}
+	}
 }
 
 /**
  * Implements double bridge movement
  */
-Solution perturb (double **m, Solution *best)
+Solution perturb (Solution *best, double **costMatrix, std::vector<std::vector<Subsequence>>& subseqMatrix)
 {
+	// perturb receives best which is different to the solution currently saved in subseqMatrix
 	Solution s = *best;
 
 	int dimension = best->sequence.size();
@@ -105,70 +127,10 @@ Solution perturb (double **m, Solution *best)
 		secondSegSize = aux;
 	}
 
-	double delta = calcDoubleBridgeCost(m, best->sequence, firstPos, firstSegSize, secondPos, secondSegSize);
-	s.cost += delta;
+	execDoubleBridge(&s, firstPos, firstSegSize, secondPos, secondSegSize);
 
-	std::vector<int> firstSeg (firstSegSize);
-	for (int i = 0; i < firstSegSize; ++i) {
-		firstSeg[i] = s.sequence[firstPos +i];
-	}
-
-	std::vector<int> secondSeg (secondSegSize);
-	for (int i = 0; i < secondSegSize; ++i) {
-		secondSeg[i] = s.sequence[secondPos +i];
-	}
-
-	int smallestSequence = std::min(firstSegSize, secondSegSize);
-
-	for (int i = 0; i < smallestSequence; ++i) {
-		std::swap(s.sequence[firstPos +i], s.sequence[secondPos +i]);
-	}
-
-	int diff = firstSegSize - secondSegSize;
-
-	// if the first sequence is bigger
-	if (diff > 0) {
-		diff = std::abs(diff);
-
-		// toMove stores the elements that haven't been moved from the first sequence
-		std::vector<int> toMove (diff);
-		int offset = firstPos + secondSegSize;
-		for (int i = 0; i < diff; ++i) {
-			toMove[i] = s.sequence[i + offset];
-		}
-
-		// moving all elements diff positions backwards to give room for toMove
-		int upper = secondPos + secondSegSize;
-		for (int i = firstPos + firstSegSize; i < upper; ++i) {
-			s.sequence[i - diff] = s.sequence[i];
-		}
-
-		// inserting toMove
-		int insert_offset = secondPos + secondSegSize - diff;
-		for (int i = 0; i < diff; i++) {
-			s.sequence[insert_offset + i] = toMove[i];
-		}
-	}
-	// if the second sequence is bigger
-	else if (diff < 0) {
-		diff = std::abs(diff);
-
-		std::vector<int> toMove (diff);
-		int offset = secondPos + firstSegSize;
-		for (int i = 0; i < diff; ++i) {
-			toMove[i] = s.sequence[i + offset];
-		}
-
-		int lower = firstPos + firstSegSize;
-		for (int i = offset -1; i >= lower; --i) {
-			s.sequence[i + diff] = s.sequence[i];
-		}
-
-		int insert_offset = firstPos + firstSegSize;
-		for (int i = 0; i < diff; ++i) {
-			s.sequence[insert_offset + i] = toMove[i];
-		}
-	}
+	updateAllSubsequences(&s, costMatrix, subseqMatrix);
+	s.cost = subseqMatrix[0][dimension-1].C;
 
 	return s;
 }

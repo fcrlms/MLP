@@ -5,7 +5,7 @@ SOURCES = $(wildcard *.cpp)
 
 OBJECTS = $(SOURCES: %.cpp = %.o)
 
-EXECUTABLE = main.out
+EXECUTABLE = mlp
 
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(EXECUTABLE)

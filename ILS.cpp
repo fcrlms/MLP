@@ -16,14 +16,16 @@ Solution ILS (double **matrixAdj, int dimension, int maxIter, int maxIterILS)
 	Solution bestOfAll;
 	bestOfAll.cost = INFINITY;
 
-	auto subseqMatrix = std::vector<std::vector<Subsequence>>(dimension, std::vector<Subsequence>(dimension));
+	// the first node repeats as the last node and every other node appears only once
+	// then (dimension +1) is needed to represent all subsequences
+	auto subseqMatrix = std::vector<std::vector<Subsequence>>(dimension +1, std::vector<Subsequence>(dimension +1));
 
 	for (int i = 0; i < maxIter; ++i) {
 		Solution s = construction(matrixAdj, dimension);
 
 		updateAllSubsequences(&s, matrixAdj, subseqMatrix);
 
-		s.cost = subseqMatrix[0][dimension-1].C;
+		s.cost = subseqMatrix[0][dimension].C;
 
 		Solution best = s;
 
@@ -37,7 +39,7 @@ Solution ILS (double **matrixAdj, int dimension, int maxIter, int maxIterILS)
 				iterILS = 0;
 			}
 
-			s = perturb(matrixAdj, &best);
+			s = perturb(&best, matrixAdj, subseqMatrix);
 
 			iterILS += 1;
 		}
