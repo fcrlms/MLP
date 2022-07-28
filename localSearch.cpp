@@ -70,15 +70,15 @@ double calculateSwapCost (int n, double **m, std::vector<std::vector<Subsequence
 
 	Subsequence sigma = sM[0][i-1];
 
-	sigma = Concatenate(sigma, sM[j][j], m);
+	Append(&sigma, sM[j][j], m);
 
 	if (i + 1 != j) {
-		sigma = Concatenate(sigma, sM[i+1][j-1], m);
+		Append(&sigma, sM[i+1][j-1], m);
 	}
 
-	sigma = Concatenate(sigma, sM[i][i], m);
+	Append(&sigma, sM[i][i], m);
 
-	sigma = Concatenate(sigma, sM[j+1][n-1], m);
+	Append(&sigma, sM[j+1][n-1], m);
 
 	return sigma.C - old.C;
 }
@@ -129,9 +129,9 @@ double calculate2OptCost (int n, double **m, std::vector<std::vector<Subsequence
 	Subsequence sigma = sM[0][i];
 
 	// the subsequence from i+1 to j is inverted and reinserted
-	sigma = Concatenate(sigma, sM[j][i+1], m);
+	Append(&sigma, sM[j][i+1], m);
 
-	sigma = Concatenate(sigma, sM[j+1][n-1], m);
+	Append(&sigma, sM[j+1][n-1], m);
 
 	return sigma.C - old.C;
 }
@@ -256,17 +256,17 @@ double calculateOrOptCost (int n, double **m, std::vector<std::vector<Subsequenc
 	// position to insert comes before the chain
 	if (pos < start) {
 		Subsequence sigma = sM[0][pos];
-		sigma = Concatenate(sigma, sM[start][end-1], m);
-		sigma = Concatenate(sigma, sM[pos+1][start-1], m);
-		sigma = Concatenate(sigma, sM[end][n-1], m);
+		Append(&sigma, sM[start][end-1], m);
+		Append(&sigma, sM[pos+1][start-1], m);
+		Append(&sigma, sM[end][n-1], m);
 		return sigma.C - old.C;
 	}
 	// position to insert comes after the chain
 	else {
 		Subsequence sigma = sM[0][start-1];
-		sigma = Concatenate(sigma, sM[end][pos], m);
-		sigma = Concatenate(sigma, sM[start][end-1], m);
-		sigma = Concatenate(sigma, sM[pos+1][n-1], m);
+		Append(&sigma, sM[end][pos], m);
+		Append(&sigma, sM[start][end-1], m);
+		Append(&sigma, sM[pos+1][n-1], m);
 		return sigma.C - old.C;
 	}
 }

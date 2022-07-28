@@ -15,5 +15,6 @@ struct Subsequence {
 
 void updateAllSubsequences (Solution *s, double **costMatrix, std::vector<std::vector<Subsequence>>& subseqMatrix);
 Subsequence Concatenate (Subsequence& sigma1, Subsequence& sigma2, double **costMatrix);
+void Append (Subsequence* sigma1, Subsequence& sigma2, double **costMatrix);
 
 #endif

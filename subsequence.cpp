@@ -41,11 +41,22 @@ Subsequence Concatenate (Subsequence& sigma1, Subsequence& sigma2, double **cost
 	double temp = costMatrix[sigma1.last][sigma2.first];
 
 	sigma.W = sigma1.W + sigma2.W;
-	sigma.T = sigma1.T + temp + sigma2.T;
 	sigma.C = sigma1.C + sigma2.W * (sigma1.T + temp) + sigma2.C;
+	sigma.T = sigma1.T + temp + sigma2.T;
 
 	sigma.first = sigma1.first;
 	sigma.last = sigma2.last;
 
 	return sigma;
+}
+
+void Append (Subsequence* sigma1, Subsequence& sigma2, double **costMatrix)
+{
+	double t = costMatrix[sigma1->last][sigma2.first];
+
+	sigma1->W += sigma2.W;
+	sigma1->C += sigma2.W * (sigma1->T + t) + sigma2.C;
+	sigma1->T += t + sigma2.T;
+
+	sigma1->last = sigma2.last;
 }
