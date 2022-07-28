@@ -3,6 +3,8 @@
 #include "subsequence.hpp"
 #include "solution.hpp"
 
+static void FastConcatenate (Subsequence *sigma, Subsequence& sigma1, Subsequence& sigma2, double **costMatrix);
+
 // later create a specific function to update the subsequences according to what movement was made
 void updateAllSubsequences (Solution *s, double **costMatrix, std::vector<std::vector<Subsequence>>& subseqMatrix)
 {
@@ -22,7 +24,7 @@ void updateAllSubsequences (Solution *s, double **costMatrix, std::vector<std::v
 	for (int j = i +1; j < n; ++j) {
 		Subsequence currentSubsequence = subseqMatrix[i][j-1];
 		Subsequence nodeToAdd = subseqMatrix[j][j];
-		subseqMatrix[i][j] = Concatenate(currentSubsequence, nodeToAdd, costMatrix);
+		FastConcatenate(&subseqMatrix[i][j], currentSubsequence, nodeToAdd, costMatrix);
 	}
 
 	// inverted subsequences (useful for 2-opt)
@@ -30,24 +32,20 @@ void updateAllSubsequences (Solution *s, double **costMatrix, std::vector<std::v
 	for (int j = i -1; j >= 0; --j) {
 		Subsequence currentSubsequence = subseqMatrix[i][j+1];
 		Subsequence nodeToAdd = subseqMatrix[j][j];
-		subseqMatrix[i][j] = Concatenate(currentSubsequence, nodeToAdd, costMatrix);
+		FastConcatenate(&subseqMatrix[i][j], currentSubsequence, nodeToAdd, costMatrix);
 	}
 }
 
-Subsequence Concatenate (Subsequence& sigma1, Subsequence& sigma2, double **costMatrix)
+static void FastConcatenate (Subsequence *sigma, Subsequence& sigma1, Subsequence& sigma2, double **costMatrix)
 {
-	Subsequence sigma;
-
 	double temp = costMatrix[sigma1.last][sigma2.first];
 
-	sigma.W = sigma1.W + sigma2.W;
-	sigma.C = sigma1.C + sigma2.W * (sigma1.T + temp) + sigma2.C;
-	sigma.T = sigma1.T + temp + sigma2.T;
+	sigma->W = sigma1.W + sigma2.W;
+	sigma->C = sigma1.C + sigma2.W * (sigma1.T + temp) + sigma2.C;
+	sigma->T = sigma1.T + temp + sigma2.T;
 
-	sigma.first = sigma1.first;
-	sigma.last = sigma2.last;
-
-	return sigma;
+	sigma->first = sigma1.first;
+	sigma->last = sigma2.last;
 }
 
 void Append (Subsequence* sigma1, Subsequence& sigma2, double **costMatrix)
