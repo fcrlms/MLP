@@ -1,7 +1,7 @@
 #ifndef SUBSEQUENCE_H
 #define SUBSEQUENCE_H
 
-#include "solution.hpp"
+#include "solution.h"
 
 struct Subsequence {
 	double T; // duration

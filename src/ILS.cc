@@ -1,12 +1,12 @@
 #include <cmath> // INFINITY
 #include <vector>
 
-#include "ILS.hpp"
-#include "construction.hpp"
-#include "localSearch.hpp"
-#include "perturb.hpp"
-#include "subsequence.hpp"
-#include "solution.hpp"
+#include "ILS.h"
+#include "construction.h"
+#include "localSearch.h"
+#include "perturb.h"
+#include "subsequence.h"
+#include "solution.h"
 
 /**
  * Iterated Local Search

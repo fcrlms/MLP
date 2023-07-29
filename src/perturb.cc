@@ -3,9 +3,9 @@
 #include <cmath> // ceil()
 #include <random>
 
-#include "perturb.hpp"
-#include "subsequence.hpp"
-#include "solution.hpp"
+#include "perturb.h"
+#include "subsequence.h"
+#include "solution.h"
 
 std::random_device rd;  // Will be used to obtain a seed for the random number engine
 std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()

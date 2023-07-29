@@ -1,7 +1,7 @@
 #include <vector>
 
-#include "subsequence.hpp"
-#include "solution.hpp"
+#include "subsequence.h"
+#include "solution.h"
 
 static void FastConcatenate (Subsequence *sigma, Subsequence& sigma1, Subsequence& sigma2, double **costMatrix);
 
